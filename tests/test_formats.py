@@ -25,7 +25,10 @@ def probe_inputs(fmt, n_random=200_000):
 def test_bit_exact_against_torch_casts(fmt, dtype):
     x = probe_inputs(fmt)
     want = x.to(dtype).float()
-    got = quantize(x, fmt, saturate=False)
+    # PyTorch changed E4M3FN overflow: 2.12 returns NaN, 2.15 saturates to ±448. Both
+    # conventions are modes of the same quantiser; check whichever this build uses.
+    saturates = not bool(torch.tensor(1e4).to(dtype).float().isnan()) and not fmt.has_inf
+    got = quantize(x, fmt, saturate=saturates)
     same = (got == want) | (got.isnan() & want.isnan())
     assert same.all(), x[~same][:10]
     assert (torch.signbit(got) == torch.signbit(want))[~want.isnan()].all()  # incl. −0

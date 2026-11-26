@@ -75,3 +75,14 @@ def test_every_recipe_trains_a_step(name):
     layer = _layer(Recipe(name, sr_grad=name.endswith("fp4"), rht=name == "nvfp4"))
     _, dx, dw = _grads(layer, x, dy)
     assert torch.isfinite(dx).all() and torch.isfinite(dw).all()
+
+
+def test_gemm_errors_are_tiny_for_fp32_and_rht_only_touches_wgrad():
+    from lowp.errors import gemm_errors
+
+    x, dy = _data()
+    w = torch.randn(128, 256, generator=torch.Generator().manual_seed(2))
+    t = {"x": x, "w": w, "g": dy}
+    assert min(gemm_errors(t, Recipe("fp32")).values()) > 100
+    a, b = gemm_errors(t, Recipe("mxfp4")), gemm_errors(t, Recipe("mxfp4", rht=True))
+    assert a["fwd"] == b["fwd"] and a["dgrad"] == b["dgrad"] and a["wgrad"] != b["wgrad"]
