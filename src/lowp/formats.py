@@ -21,9 +21,11 @@ The formats differ only in what lies past the largest finite value:
 | E3M2, E2M3 | 3, 2 / 2, 3 | 28 / 7.5 | (saturate) | OCP MX FP6 |
 | E2M1 | 2, 1 | 6 | (saturate) | OCP MX FP4 / NVFP4 element |
 
-With ``saturate=False``, an overflowing result becomes inf or NaN exactly as PyTorch's
-``float8_e4m3fn`` / ``float8_e5m2`` casts do. The tests check this bit for bit. Training
-recipes use ``saturate=True``, which clamps to ± the largest finite value.
+With ``saturate=False``, an overflowing result becomes inf (E5M2) or NaN (E4M3FN), as
+PyTorch's casts do up to at least 2.12. ``saturate=True`` clamps to ± the largest finite
+value, which is what PyTorch 2.15's E4M3FN cast does (inf included). Training recipes
+use it. The tests check whichever convention the installed PyTorch follows, bit for
+bit.
 """
 
 from __future__ import annotations

@@ -26,7 +26,10 @@ it is exact. Subnormals fall out of the clamp on E.
 The tests compare against PyTorch on every representable value, every rounding tie and
 its float32 neighbours, overflow, subnormals, ±0, ±inf, NaN and 200k random inputs. One
 detail they pinned down is that PyTorch's E8M0 cast rounds to the *linearly* nearest
-power of two, with ties going up, while the OCP MX spec's shared-scale rule is floor.
+power of two, with ties going up, while the OCP MX spec's shared-scale rule is floor. They also caught a change in PyTorch itself: an
+overflowing E4M3FN cast returns NaN in 2.12 but saturates to ±448 in 2.15. The
+quantiser offers both conventions (`saturate=`), and the test checks whichever one the
+installed version follows.
 
 ## Scaling recipes ([`scaling.py`](src/lowp/scaling.py))
 
